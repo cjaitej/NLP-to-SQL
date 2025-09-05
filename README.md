@@ -1,1 +1,1 @@
-# SQL-to-NLP
+# NLP-to-SQL
