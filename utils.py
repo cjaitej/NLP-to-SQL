@@ -49,11 +49,11 @@ def generate_sql(schema, prompt, question, topk=None):
 
     except ValueError:
         print("  - API Error: Response was blocked by the safety filter.")
-        return "" # Return empty string on block
+        return ""
 
     except Exception as e:
         print(f"  - An unexpected API error occurred: {e}")
-        return "" # Return empty string on other errorss
+        return ""
 
 def compute_ves(exec_results):
     num_queries = len(exec_results)
@@ -84,7 +84,7 @@ def evaluate(data_to_evaluate, good_prompt, data_set, version_name):
         orig_query = item["query"] if data_set == "spider" else item["SQL"]
 
 
-        # This is the correct path to the DATABASE file
+
         path = os.path.join("spider", "database", db_id, f"{db_id}.sqlite") if data_set=="spider" else os.path.join("data","bird","dev_databases", db_id, f"{db_id}.sqlite")
 
         d = {}
@@ -92,14 +92,12 @@ def evaluate(data_to_evaluate, good_prompt, data_set, version_name):
         d["question"] = question
         d["original_query"] = orig_query
 
-        # This is the correct path to the DATABASE file
-        path = os.path.join("spider", "database", db_id, f"{db_id}.sqlite")
+
 
         schema = get_schema(path)
         # print(schema)
         pred_query = generate_sql(schema, good_prompt, question)
-        d["llm_output"] = pred_query
-        match =  re.search(r"-- SQL Query\s*(SELECT[\s\S]*?;)", pred_query, re.IGNORECASE)
+        match =  re.search(r"SELECT[\s\S]*?;", pred_query, re.IGNORECASE)
         pred_query = match.group(0).strip() if match else None
         d["pred_query"] = pred_query
 
@@ -112,7 +110,7 @@ def evaluate(data_to_evaluate, good_prompt, data_set, version_name):
         else:
             time_ratio = 0
 
-        # Store per-example info
+
         d["pred_time"] = pred_time
         d["orig_time"] = orig_time
         d["time_ratio"] = time_ratio
@@ -121,7 +119,7 @@ def evaluate(data_to_evaluate, good_prompt, data_set, version_name):
         print(f"Question: {question}")
         print(f"  - Generated SQL: {pred_query}")
 
-        # Compare the RESULTS, not the cursor objects
+
         if pred_result is not None and pred_result == orig_result:
             correct += 1
             d["check"] = True
@@ -132,13 +130,13 @@ def evaluate(data_to_evaluate, good_prompt, data_set, version_name):
         data.append(d)
         accuracy = (correct / (i + 1)) * 100 if total_len > 0 else 0
         print(f"Accuracy = {accuracy}")
-        break
+
         time.sleep(10)
 
     file_path_data=os.path.join("spider",f"results_{version_name}.json")
     with open(file_path_data,'w') as f:
         json.dump(data,f,indent=4)
-         # Respect API rate limits
+
 
 
     accuracy = (correct / (i + 1)) * 100 if total_len > 0 else 0
@@ -187,13 +185,13 @@ def evaluate_dynamic_fewshot(data_to_evaluate, good_prompt, top_k, data_set, ver
         d["question"] = question
         d["original_query"] = orig_query
 
-        # This is the correct path to the DATABASE file
+
 
         schema = get_schema(path)
-        # print(schema)
-        pred_query_raw = generate_sql(schema, good_prompt, question, topk=topk)
-        d["llm_output"] = pred_query_raw
-        pred_query = extract_sql(pred_query_raw)
+
+        pred_query = generate_sql(schema, good_prompt, question, topk=topk)
+        match =  re.search(r"SELECT[\s\S]*?;", pred_query, re.IGNORECASE)
+        pred_query = match.group(0).strip() if match else None
         d["pred_query"] = pred_query
 
         pred_result, pred_time = execute_query(path, pred_query)
@@ -205,7 +203,7 @@ def evaluate_dynamic_fewshot(data_to_evaluate, good_prompt, top_k, data_set, ver
         else:
             time_ratio = 0
 
-        # Store per-example info
+
         d["pred_time"] = pred_time
         d["orig_time"] = orig_time
         d["time_ratio"] = time_ratio
@@ -214,7 +212,7 @@ def evaluate_dynamic_fewshot(data_to_evaluate, good_prompt, top_k, data_set, ver
         print(f"Question: {question}")
         print(f"  - Generated SQL: {pred_query}")
 
-        # Compare the RESULTS, not the cursor objects
+
         if pred_result is not None and pred_result == orig_result:
             correct += 1
             d["check"] = True
@@ -225,14 +223,13 @@ def evaluate_dynamic_fewshot(data_to_evaluate, good_prompt, top_k, data_set, ver
         data.append(d)
         accuracy = (correct / (i + 1)) * 100 if total_len > 0 else 0
         print(f"Accuracy = {accuracy}")
-        # if i == 5:
-            # break
+
         time.sleep(10)
 
     file_path_data=os.path.join("spider",f"results_{version_name}.json")
     with open(file_path_data,'w') as f:
         json.dump(data,f,indent=4)
-         # Respect API rate limits
+
 
 
     accuracy = (correct / (i + 1)) * 100 if total_len > 0 else 0

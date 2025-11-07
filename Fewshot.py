@@ -110,8 +110,8 @@ Return output in the required format and nothing else.
     with open(sub_path, "r") as f:
         dev_data = json.load(f)
 
-    # CORRECTED: Loop and total length must match
-    data_to_evaluate = dev_data # Let's test on 5 examples
+    
+    data_to_evaluate = dev_data 
     evaluate(data_to_evaluate, good_prompt, data_set, version_name)
 
 

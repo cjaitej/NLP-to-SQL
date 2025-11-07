@@ -36,7 +36,7 @@ def main():
     with open(sub_path, "r") as f:
         dev_data = json.load(f)
 
-    data_to_evaluate = dev_data # Let's test on 5 examples
+    data_to_evaluate = dev_data 
     evaluate(data_to_evaluate, good_prompt, data_set, version_name)
 
 
