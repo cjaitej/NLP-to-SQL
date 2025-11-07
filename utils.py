@@ -157,16 +157,13 @@ def evaluate(data_to_evaluate, good_prompt, data_set, version_name):
 
 
 def extract_sql(output_text):
-    # 1) Split so explanation part is removed
     parts = re.split(r"--\s*SQL\s*Query", output_text, flags=re.IGNORECASE)
     sql_section = parts[1] if len(parts) > 1 else output_text
 
-    # 2) Extract first real SELECT … ; query
     match = re.search(r"(SELECT[\s\S]*?;)", sql_section, re.IGNORECASE)
     if match:
         return match.group(1).strip()
 
-    # 3) If semicolon missing, still capture full query
     match = re.search(r"(SELECT[\s\S]*)", sql_section, re.IGNORECASE)
     return match.group(1).strip() if match else None
 
