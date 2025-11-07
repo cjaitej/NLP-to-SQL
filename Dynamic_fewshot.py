@@ -1,9 +1,7 @@
 import json
-from dotenv import load_dotenv
 import google.generativeai as genai
 import os
 from utils import *
-import time
 
 
 def main():
@@ -40,16 +38,16 @@ def main():
     sub_path = (
         os.path.join("spider", "dev_spider_filtered.json")
         if data_set == "spider"
-        else os.path.join("data", "bird", "dev_bird_filtered.json")
+        else os.path.join("data", "bird", "dev_bird_filtered_200.json")
     )
 
     with open(sub_path, "r") as f:
         dev_data = json.load(f)
 
-    evaluate_dynamic_fewshot(dev_data, good_prompt, top_k, data_set, version_name)
+    evaluate_dynamic_fewshot(dev_data, good_prompt, top_k, data_set, version_name, provider)
 
 if __name__ == "__main__":
-    data_set = preprocessing()
-    version_name = f"{data_set}_dynamic_fewshot"
-    top_k = 5
+    provider, data_set = preprocessing()
+    version_name = f"{provider}_{data_set}_dynamic_fewshot_top1"
+    top_k = 1
     main()

@@ -6,15 +6,38 @@ import math
 import os
 import json
 from dotenv import load_dotenv
+from groq import Groq
 
+
+
+#Only Gemini (Dont remove this)
+# def preprocessing():
+#     load_dotenv()
+#     API_KEY = os.getenv("GOOGLE_API_KEY")
+#     genai.configure(api_key=API_KEY)
+#     data_set = input("Enter dataset to start (spider/bird): ").strip()
+#     return data_set
 
 
 def preprocessing():
     load_dotenv()
-    API_KEY = os.getenv("GOOGLE_API_KEY")
-    genai.configure(api_key=API_KEY)
-    data_set = input("Enter dataset to start (spider/bird): ").strip()
-    return data_set
+
+    provider = input("Choose model (gemini/groq): ").strip().lower()
+    data_set  = input("Enter dataset to start (spider/bird): ").strip()
+
+    if provider == "gemini":
+        API_KEY = os.getenv("GOOGLE_API_KEY")
+        genai.configure(api_key=API_KEY)
+
+    elif provider == "groq":
+        global groq_client
+        groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+
+    else:
+        raise ValueError("Invalid provider. Choose either 'gemini' or 'groq'.")
+
+    return provider, data_set
+
 
 def execute_query(db_path, query):
     """Executes a query and returns (sorted results, exec_time) or (None, None) on error."""
@@ -31,29 +54,62 @@ def execute_query(db_path, query):
     except Exception:
         return None, None
 
-def generate_sql(schema, prompt, question, topk=None):
-    """
-    Generates a SQL query using the Gemini model with robust error handling.
-    """
-    model = genai.GenerativeModel("gemini-2.5-flash")
+# def generate_sql(schema, prompt, question, topk=None):
+#     """
+#     Generates a SQL query using the Gemini model with robust error handling.
+#     """
+#     model = genai.GenerativeModel("gemini-2.5-flash")
 
+#     if topk:
+#         final_prompt = prompt.format(db_schema=schema, user_question=question, top_k=topk)
+#     else:
+#         final_prompt = prompt.format(db_schema=schema, user_question=question)
+#     try:
+#         response = model.generate_content(final_prompt)
+#         cleaned_query = response.text.strip().replace("```sql", "").replace("```", "")
+#         return cleaned_query
+
+#     except ValueError:
+#         print("  - API Error: Response was blocked by the safety filter.")
+#         return "" # Return empty string on block
+
+#     except Exception as e:
+#         print(f"  - An unexpected API error occurred: {e}")
+#         return "" # Return empty string on other errorss
+
+def generate_sql(schema, prompt, question, topk=None, provider="gemini"):
+    """
+    Generates a SQL query using Gemini or Groq depending on provider.
+    """
     if topk:
         final_prompt = prompt.format(db_schema=schema, user_question=question, top_k=topk)
     else:
         final_prompt = prompt.format(db_schema=schema, user_question=question)
 
-    try:
-        response = model.generate_content(final_prompt)
-        cleaned_query = response.text.strip().replace("```sql", "").replace("```", "")
-        return cleaned_query
+    # === GEMINI ===
+    if provider == "gemini":
+        try:
+            model = genai.GenerativeModel("gemini-2.5-flash")
+            response = model.generate_content(final_prompt)
+            cleaned = response.text.strip().replace("```sql", "").replace("```", "")
+            return cleaned
+        except Exception as e:
+            print("Gemini Error:", e)
+            return ""
 
-    except ValueError:
-        print("  - API Error: Response was blocked by the safety filter.")
-        return "" # Return empty string on block
+    # === GROQ ===
+    elif provider == "groq":
+        try:
+            response = groq_client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=[{"role": "user", "content": final_prompt}]
+            )
+            cleaned = response.choices[0].message.content.strip().replace("```sql", "").replace("```", "")
+            return cleaned
+        except Exception as e:
+            print("Groq Error:", e)
+            return ""
 
-    except Exception as e:
-        print(f"  - An unexpected API error occurred: {e}")
-        return "" # Return empty string on other errorss
 
 def compute_ves(exec_results):
     num_queries = len(exec_results)
@@ -171,7 +227,7 @@ def extract_sql(output_text):
     return match.group(1).strip() if match else None
 
 
-def evaluate_dynamic_fewshot(data_to_evaluate, good_prompt, top_k, data_set, version_name):
+def evaluate_dynamic_fewshot(data_to_evaluate, good_prompt, top_k, data_set, version_name, provider):
     correct = 0
     total_len = len(data_to_evaluate)
     print(f"--- Starting Execution Accuracy evaluation on {total_len} examples ---")
@@ -191,10 +247,9 @@ def evaluate_dynamic_fewshot(data_to_evaluate, good_prompt, top_k, data_set, ver
         d["original_query"] = orig_query
 
         # This is the correct path to the DATABASE file
-
         schema = get_schema(path)
         # print(schema)
-        pred_query_raw = generate_sql(schema, good_prompt, question, topk=topk)
+        pred_query_raw = generate_sql(schema, good_prompt, question, topk, provider)
         d["llm_output"] = pred_query_raw
         pred_query = extract_sql(pred_query_raw)
         d["pred_query"] = pred_query
@@ -229,7 +284,6 @@ def evaluate_dynamic_fewshot(data_to_evaluate, good_prompt, top_k, data_set, ver
         accuracy = (correct / (i + 1)) * 100 if total_len > 0 else 0
         print(f"Accuracy = {accuracy}")
         # if i == 5:
-            # break
         time.sleep(10)
 
     file_path_data=os.path.join("spider",f"results_{version_name}.json")
