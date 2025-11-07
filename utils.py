@@ -98,7 +98,8 @@ def evaluate(data_to_evaluate, good_prompt, data_set, version_name):
         schema = get_schema(path)
         # print(schema)
         pred_query = generate_sql(schema, good_prompt, question)
-        match =  re.search(r"SELECT[\s\S]*?;", pred_query, re.IGNORECASE)
+        d["llm_output"] = pred_query
+        match =  re.search(r"-- SQL Query\s*(SELECT[\s\S]*?;)", pred_query, re.IGNORECASE)
         pred_query = match.group(0).strip() if match else None
         d["pred_query"] = pred_query
 
@@ -131,7 +132,7 @@ def evaluate(data_to_evaluate, good_prompt, data_set, version_name):
         data.append(d)
         accuracy = (correct / (i + 1)) * 100 if total_len > 0 else 0
         print(f"Accuracy = {accuracy}")
-        # break
+        break
         time.sleep(10)
 
     file_path_data=os.path.join("spider",f"results_{version_name}.json")
@@ -153,6 +154,21 @@ def evaluate(data_to_evaluate, good_prompt, data_set, version_name):
 
     print(f"Results saved as {summary_path}")
     return accuracy, ves
+
+
+def extract_sql(output_text):
+    # 1) Split so explanation part is removed
+    parts = re.split(r"--\s*SQL\s*Query", output_text, flags=re.IGNORECASE)
+    sql_section = parts[1] if len(parts) > 1 else output_text
+
+    # 2) Extract first real SELECT … ; query
+    match = re.search(r"(SELECT[\s\S]*?;)", sql_section, re.IGNORECASE)
+    if match:
+        return match.group(1).strip()
+
+    # 3) If semicolon missing, still capture full query
+    match = re.search(r"(SELECT[\s\S]*)", sql_section, re.IGNORECASE)
+    return match.group(1).strip() if match else None
 
 
 def evaluate_dynamic_fewshot(data_to_evaluate, good_prompt, top_k, data_set, version_name):
@@ -178,9 +194,9 @@ def evaluate_dynamic_fewshot(data_to_evaluate, good_prompt, top_k, data_set, ver
 
         schema = get_schema(path)
         # print(schema)
-        pred_query = generate_sql(schema, good_prompt, question, topk=topk)
-        match =  re.search(r"SELECT[\s\S]*?;", pred_query, re.IGNORECASE)
-        pred_query = match.group(0).strip() if match else None
+        pred_query_raw = generate_sql(schema, good_prompt, question, topk=topk)
+        d["llm_output"] = pred_query_raw
+        pred_query = extract_sql(pred_query_raw)
         d["pred_query"] = pred_query
 
         pred_result, pred_time = execute_query(path, pred_query)
@@ -212,7 +228,8 @@ def evaluate_dynamic_fewshot(data_to_evaluate, good_prompt, top_k, data_set, ver
         data.append(d)
         accuracy = (correct / (i + 1)) * 100 if total_len > 0 else 0
         print(f"Accuracy = {accuracy}")
-        # break
+        # if i == 5:
+            # break
         time.sleep(10)
 
     file_path_data=os.path.join("spider",f"results_{version_name}.json")
