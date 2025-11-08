@@ -1,0 +1,2 @@
+Execution Accuracy: 46.50%
+Valid Efficiency Score (VES): 51.97
