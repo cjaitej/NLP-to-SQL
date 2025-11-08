@@ -5,20 +5,11 @@ from utils import *
 
 def main():
     #need to change this. we are using wrong prompt.
-    good_prompt="""You are an expert in converting English questions to SQL queries!
-        Database Engine:
-        SQLite
+    good_prompt="""
+        Below is an instruction that describes a task, paired with an input that provides further context.
+        Write a response that appropriately completes the request.
 
-        Database Schema:
-        {db_schema}
-
-        Question:
-        {user_question}
-
-        -- SQL Query:
-        Write only the SQL query (starting with SELECT and ending with ;
-
-        Return output in the required format and nothing else.
+        ### db_info:\n{db_schema}\n\n### Input:\n{user_question}\n\n### Response:
         """
 
 
