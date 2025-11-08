@@ -1,2 +1,5 @@
-Execution Accuracy: 69.50%
-Valid Efficiency Score (VES): 67.63
+results of gemini_spider_dynamic_fewshot_top1
+Execution Accuracy: 68.00%
+Valid Efficiency Score (VES): 80.03
+
+
