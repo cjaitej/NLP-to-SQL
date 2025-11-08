@@ -4,7 +4,7 @@ from utils import *
 
 
 def main():
-    
+    #need to change this. we are using wrong prompt.
     good_prompt="""You are an expert in converting English questions to SQL queries!
         Database Engine:
         SQLite
@@ -30,11 +30,12 @@ def main():
     with open(sub_path, "r") as f:
         dev_data = json.load(f)
 
-    
-    data_to_evaluate = dev_data 
-    evaluate(data_to_evaluate, good_prompt, data_set, version_name)
+    # CORRECTED: Loop and total length must match
+    data_to_evaluate = dev_data # Let's test on 5 examples
+    evaluate(data_to_evaluate, good_prompt, data_set, version_name, provider)
+
 
 if __name__ == "__main__":
-    data_set = preprocessing()
-    version_name = f"{data_set}_structured"
+    provider, data_set = preprocessing()
+    version_name = f"{provider}_{data_set}_simple"
     main()

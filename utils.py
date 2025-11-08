@@ -101,7 +101,7 @@ def generate_sql(schema, prompt, question, topk=None, provider="gemini"):
     elif provider == "groq":
         try:
             response = groq_client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
+                model="llama-3.1-8b-instant",
                 messages=[{"role": "user", "content": final_prompt}]
             )
             cleaned = response.choices[0].message.content.strip().replace("```sql", "").replace("```", "")
@@ -129,7 +129,7 @@ def get_schema(path):
     conn.close()
     return schema
 
-def evaluate(data_to_evaluate, good_prompt, data_set, version_name):
+def evaluate(data_to_evaluate, good_prompt, data_set, version_name, provider):
     correct = 0
     total_len = len(data_to_evaluate)
     print(f"--- Starting Execution Accuracy evaluation on {total_len} examples ---")
@@ -141,22 +141,25 @@ def evaluate(data_to_evaluate, good_prompt, data_set, version_name):
 
 
         # This is the correct path to the DATABASE file
-        path = os.path.join("spider", "database", db_id, f"{db_id}.sqlite") if data_set=="spider" else os.path.join("data","bird","dev_databases", db_id, f"{db_id}.sqlite")
 
+        path = os.path.join("spider", "database", db_id, f"{db_id}.sqlite") if data_set=="spider" else os.path.join("data","bird","dev_databases", db_id, f"{db_id}.sqlite")
         d = {}
         d["id"] = db_id
         d["question"] = question
         d["original_query"] = orig_query
 
-        # This is the correct path to the DATABASE file
-        path = os.path.join("spider", "database", db_id, f"{db_id}.sqlite")
 
         schema = get_schema(path)
         # print(schema)
-        pred_query = generate_sql(schema, good_prompt, question)
-        d["llm_output"] = pred_query
-        match =  re.search(r"-- SQL Query\s*(SELECT[\s\S]*?;)", pred_query, re.IGNORECASE)
-        pred_query = match.group(0).strip() if match else None
+        # pred_query = generate_sql(schema, good_prompt, question)
+        # d["llm_output"] = pred_query
+        # match =  re.search(r"-- SQL Query\s*(SELECT[\s\S]*?;)", pred_query, re.IGNORECASE)
+        # pred_query = match.group(0).strip() if match else None
+        # d["pred_query"] = pred_query
+
+        pred_query_raw = generate_sql(schema, good_prompt, question, topk=None, provider=provider)
+        d["llm_output"] = pred_query_raw
+        pred_query = extract_sql(pred_query_raw)
         d["pred_query"] = pred_query
 
         pred_result, pred_time = execute_query(path, pred_query)
@@ -188,7 +191,6 @@ def evaluate(data_to_evaluate, good_prompt, data_set, version_name):
         data.append(d)
         accuracy = (correct / (i + 1)) * 100 if total_len > 0 else 0
         print(f"Accuracy = {accuracy}")
-        break
         time.sleep(10)
 
     file_path_data=os.path.join("spider",f"results_{version_name}.json")

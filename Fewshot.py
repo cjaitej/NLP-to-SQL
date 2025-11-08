@@ -100,6 +100,99 @@ Write only the SQL query (starting with SELECT and ending with ;
 
 Return output in the required format and nothing else.
 """
+#     good_prompt = """You are an expert data scientist and SQL engineer. You are given a database schema and a natural language question. Your task is to carefully analyze the schema, reason about table relationships, and generate a correct and efficient SQLite query that fully answers the question.
+
+# Database Engine:
+# SQLite
+
+# Follow the reasoning and query structure as shown in the few-shot examples below.
+
+# Example 1:
+# -- Question
+# Which active district has the highest average score in Reading?
+
+# -- Reasoning
+# We need the district name and the corresponding average reading score. Join the schools table with satscores using CDSCode, filter for active districts, sort by reading score in descending order, and return the top one.
+
+# -- SQL Query
+# SELECT T1.District
+# FROM schools AS T1
+# INNER JOIN satscores AS T2 ON T1.CDSCode = T2.cds
+# WHERE T1.StatusType = 'Active'
+# ORDER BY T2.AvgScrRead DESC
+# LIMIT 1;
+
+# Example 2:
+# -- Question
+# Find the full name of members whose t-shirt size is extra large.
+
+# -- Reasoning
+# We select first and last names of all members from the member table where the t-shirt size column matches 'X-Large'.
+
+# -- SQL Query
+# SELECT first_name, last_name
+# FROM member
+# WHERE t_shirt_size = 'X-Large';
+
+# Example 3:
+# -- Question
+# Which country is the oldest driver from?
+
+# -- Reasoning
+# We look for the earliest date of birth (dob) in the drivers table and return the nationality corresponding to that record.
+
+# -- SQL Query
+# SELECT nationality
+# FROM drivers
+# WHERE dob IS NOT NULL
+# ORDER BY dob ASC
+# LIMIT 1;
+
+# Example 4:
+# -- Question
+# Which districts have transactions greater than $10,000 in 1997?
+
+# -- Reasoning
+# We join account, district, and trans tables using their IDs, filter transactions from the year 1997, group by district, and return those having total transaction amounts greater than 10,000.
+
+# -- SQL Query
+# SELECT T1.district_id
+# FROM account AS T1
+# INNER JOIN district AS T2 ON T1.district_id = T2.district_id
+# INNER JOIN trans AS T3 ON T1.account_id = T3.account_id
+# WHERE STRFTIME('%Y', T3.date) = '1997'
+# GROUP BY T1.district_id
+# HAVING SUM(T3.amount) > 10000;
+
+# Example 5:
+# -- Question
+# How many cards have infinite power?
+
+# -- Reasoning
+# We simply count all rows in the cards table where the power attribute equals '*', which represents infinity.
+
+# -- SQL Query
+# SELECT COUNT(*)
+# FROM cards
+# WHERE power = '*';
+
+# Now, for the following schema and question, follow the same reasoning process and output format:
+
+# Database Schema:
+# {db_schema}
+
+# Question:
+# {user_question}
+
+# -- Reasoning
+# (Concise 2–6 line logical explanation describing how you derived the query)
+
+# -- SQL Query
+
+# Write only the SQL query (starting with SELECT and ending with ;
+
+# Return output in the required format and nothing else.
+# """
 
 
     sub_path = (
@@ -110,13 +203,13 @@ Return output in the required format and nothing else.
     with open(sub_path, "r") as f:
         dev_data = json.load(f)
 
-    
-    data_to_evaluate = dev_data 
-    evaluate(data_to_evaluate, good_prompt, data_set, version_name)
+    # CORRECTED: Loop and total length must match
+    data_to_evaluate = dev_data # Let's test on 5 examples
+    evaluate(data_to_evaluate, good_prompt, data_set, version_name, provider)
 
 
 
 if __name__ == "__main__":
-    data_set = preprocessing()
-    version_name = f"{data_set}_fewshot"
+    provider, data_set = preprocessing()
+    version_name = f"{provider}_{data_set}_fewshot"
     main()
