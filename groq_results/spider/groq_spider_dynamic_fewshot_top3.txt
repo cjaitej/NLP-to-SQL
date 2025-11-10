@@ -1,5 +1,2 @@
-results of groq_spider_dynamic_fewshot_top3
-Execution Accuracy: 49.50%
-Valid Efficiency Score (VES): 67.45
-
-
+Execution Accuracy: 50.00%
+Valid Efficiency Score (VES): 63.40
