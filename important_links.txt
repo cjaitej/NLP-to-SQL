@@ -1,0 +1,2 @@
+github: https://github.com/cjaitej/NLP-to-SQL
+dataset: https://drive.google.com/file/d/1aE2HMPSPEKkUfYJp_Sy1QAuDQmpQ_Ltz/view?usp=sharing
