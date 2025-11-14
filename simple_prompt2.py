@@ -4,7 +4,6 @@ from utils import *
 
 
 def main():
-    #need to change this. we are using wrong prompt.
     good_prompt="""
         Below is an instruction that describes a task, paired with an input that provides further context.
         Write a response that appropriately completes the request.
@@ -21,8 +20,7 @@ def main():
     with open(sub_path, "r") as f:
         dev_data = json.load(f)
 
-    # CORRECTED: Loop and total length must match
-    data_to_evaluate = dev_data # Let's test on 5 examples
+    data_to_evaluate = dev_data
     evaluate(data_to_evaluate, good_prompt, data_set, version_name, provider)
 
 
